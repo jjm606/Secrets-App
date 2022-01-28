@@ -13,7 +13,6 @@ const session = require('express-session');
 const passport = require('passport');
 const passportLocalMongoose = require('passport-local-mongoose');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const TwitterStrategy = require('passport-twitter-oauth2.0');
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
 const findOrCreate = require('mongoose-findorcreate');
 const app = express();
@@ -64,25 +63,6 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-//TWITTER USE
-passport.use(
-    new TwitterStrategy(
-        {
-            clientID: process.env.TWITTER_CONSUMER_KEY,
-            clientSecret: process.env.TWITTER_CONSUMER_SECRET,
-            callbackURL: 'http://localhost:3000/auth/twitter/secrets',
-            clientType: "private", // "public" or "private"
-            pkce: true, // required,
-            state: true, // required
-        },
-        function (accessToken, refreshToken, profile, done) {
-            User.findOrCreate({ twitterId: profile.id }, function (err, user) {
-                return done(err, user);
-            });
-        }
-    )
-);
-
 passport.use(new LinkedInStrategy({
     clientID: process.env.LINKEDIN_CONSUMER_KEY,
     clientSecret: process.env.LINKEDIN_CONSUMER_SECRET,
@@ -115,20 +95,6 @@ app.get('/auth/google/secrets',
     // Successful authentication, redirect secrets.
     res.redirect('/secrets');
   });
-
-app.get(
-    "/auth/twitter",
-    passport.authenticate("twitter", { scope: ["offline.access"] })
-);
-
-app.get(
-    "/auth/twitter/secrets",
-    passport.authenticate("twitter", { failureRedirect: "/login" }),
-    function (req, res) {
-        // Successful authentication, redirect home.
-        res.redirect("/");
-    }
-);
 
 app.get('/auth/linkedin',
   passport.authenticate('linkedin'),
